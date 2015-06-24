@@ -8,8 +8,8 @@ var fs = require('fs'),
 
 var _data = [],
     _failure = [],
-    _check_tpl = '',
-    _uncheck_tpl = '';
+    _check_tpl = 'active_notice_sms',
+    _uncheck_tpl = 'active_notice_sms2';
 var leanCloudConf = require('./data/config.json');
 
 
@@ -20,20 +20,25 @@ var initAV = function(appid){
 
 
 var loadFileData = function(file){
+    if (!program.category){
+        console.log('请用 -c 1 参数设置短信类型');
+        return;
+    }
     stats = fs.lstatSync(file);
     if (stats.isFile()){
         var array = fs.readFileSync(file).toString().split("\n");
         for(i in array) {
             var _num = array[i].replace(/[^\d]+/g,''),
                 _re = /^1[0-9]{10}$/g;
-            //console.log(_num);
             if (_num ){
                 _data.push(_num);
             }
         }
         if (_data.length > 0){
-            multiSend(_data);
+            multiSend(_data,program.category);
         }
+    }else{
+        console.log('文件不存在');
     }
 };
 
@@ -50,7 +55,7 @@ var sendSms = function(phone,type){
     if (!type) type = 1;
     var _data = {
         mobilePhoneNumber: phone,
-        template: "active_notice_sms",
+        template: type == 1 ? _check_tpl : _uncheck_tpl,
         name:'彭博商业周刊'
     }
 
@@ -64,7 +69,6 @@ var sendSms = function(phone,type){
         fs.appendFile('./data/failure.txt',phone+'\n',function(err){
             //console.log('write file error:'+ err);
         });
-        //_failure.push(phone);
     });
 };
 
